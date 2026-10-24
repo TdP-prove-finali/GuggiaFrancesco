@@ -80,7 +80,7 @@ class Viaggio:
 
 @dataclass
 class Metriche:
-    # definite senza date, cosi' piano reale e ottimizzato sono confrontabili
+    # definite senza date, cosi' piano reale e ottimizzato sono confrontabili senza problemi
     km: float = 0.0
     trasferimenti: int = 0
     giorni_fuori: int = 0
