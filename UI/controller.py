@@ -28,7 +28,14 @@ class Controller:
         if stagioni:
             self._view.dd_stagione.value = stagioni[0].stagione_id
 
-        self._riempiParametri()
+        
+        self._view.riga_parametri.controls.clear()
+        self._view.txt_parametri.clear()
+        for nome, dati in self._model.getParametri().items():
+            campo = ft.TextField(label=nome.replace("_", " "), dense=True, width=190,
+                                 value=f"{dati['valore']:g}", helper_text=dati["unita"])
+            self._view.txt_parametri[nome] = campo
+            self._view.riga_parametri.controls.append(campo)
 
         self._view.update_page()
 
@@ -57,10 +64,11 @@ class Controller:
             self.handleCalcolaPiano(e)
 
     def handleCalcolaPiano(self, e):
-        selezione = self._selezione()
-        if selezione is None:
+        stagione_id = self._view.dd_stagione.value
+        team_id = self._view.dd_squadra.value
+        if not stagione_id or not team_id:
+            self._view.create_alert("Selezionare squadra e stagione")
             return
-        stagione_id, team_id = selezione
         max_partite = int(self._view.txt_max_partite.value)
 
         avvio = time.perf_counter()
@@ -68,22 +76,78 @@ class Controller:
         self._piano = self._model.ottimizzaPiano(
             stagione_id, team_id, max_partite, self._baseline)
         durata = time.perf_counter() - avvio
-
         m = self._piano.metriche
-        elementi = [
-            f"Piano ottimizzato (max {max_partite} gare per viaggio), calcolato in {durata:.2f} s",
-            self._riepilogo(self._piano),
-            "",
-            "Dettaglio dei viaggi",
-            self._dettaglioViaggi(self._piano),
+
+
+        voci = [
+            ("viaggi", m.viaggi),
+            ("chilometri", f"{m.km:,.0f}"),
+            ("tratte aeree", m.tratte),
+            ("trasferimenti", m.trasferimenti),
+            ("giorni fuori sede", m.giorni_fuori),
+            ("costo stimato", f"{self._piano.costo.totale:,.0f} EUR"),
         ]
-        self._scrivi(self._view.lista_piano, elementi)
+        riepilogo = self._tabella(["metrica", "valore"], voci, numeriche=[1])
+
+
+        sede = self._model.citta(self._piano.team_id)
+        righe = []
+        for i in range(len(self._piano.viaggi)):
+            viaggio = self._piano.viaggi[i]
+            costo = self._model.calcolaCosto(self._model.calcolaMetriche([viaggio])).totale
+            nomi = [sede]
+            for t in viaggio.tappe:
+                nomi.append(self._model.citta(t))
+            nomi.append(sede)
+            righe.append([i + 1, f"{viaggio.km:,.0f}", f"{costo:,.0f}", viaggio.partite,
+                          " -> ".join(nomi)])
+        dettaglio = self._tabella(["#", "km", "costo EUR", "gare", "percorso"], righe,
+                                  numeriche=[0, 1, 2, 3])
+
+        lista = self._view.lista_piano
+        lista.controls.clear()
+        lista.controls.append(ft.Text(
+            f"Piano ottimizzato (max {max_partite} gare per viaggio), calcolato in {durata:.2f} s",
+            size=12))
+        lista.controls.append(ft.Row([riepilogo], scroll=ft.ScrollMode.AUTO))
+        lista.controls.append(ft.Text("", size=12))
+        lista.controls.append(ft.Text("Dettaglio dei viaggi", size=12))
+        lista.controls.append(ft.Row([dettaglio], scroll=ft.ScrollMode.AUTO))
+
+
         r = self._baseline.metriche.km
+        costo_totale = self._piano.costo.totale
+        if costo_totale >= 1_000_000:
+            costo_breve = f"{costo_totale / 1_000_000:.2f} M"
+        elif costo_totale >= 1_000:
+            costo_breve = f"{costo_totale / 1_000:,.0f} k"
+        else:
+            costo_breve = f"{costo_totale:,.0f}"
         self._view.riquadri_piano["risparmio"][0].value = f"-{(r - m.km) / r * 100:.1f}%"
         self._view.riquadri_piano["viaggi"][0].value = str(m.viaggi)
         self._view.riquadri_piano["km"][0].value = f"{m.km:,.0f}"
-        self._view.riquadri_piano["costo"][0].value = self._breve(self._piano.costo.totale)
-        self._aggiornaRiquadriConfronto()
+        self._view.riquadri_piano["costo"][0].value = costo_breve
+
+
+        o = self._piano.metriche
+        rb = self._baseline.metriche
+        risparmio = rb.km - o.km
+        euro = self._baseline.costo.totale - self._piano.costo.totale
+        if abs(euro) >= 1_000_000:
+            euro_breve = f"{euro / 1_000_000:.2f} M"
+        elif abs(euro) >= 1_000:
+            euro_breve = f"{euro / 1_000:,.0f} k"
+        else:
+            euro_breve = f"{euro:,.0f}"
+        rc = self._view.riquadri_confronto
+        rc["km_reali"][0].value = f"{rb.km:,.0f}"
+        rc["km_reali"][1].value = "km, calendario reale"
+        rc["km_ottimi"][0].value = f"{o.km:,.0f}"
+        rc["km_ottimi"][1].value = "km, piano ottimizzato"
+        rc["risparmio_km"][0].value = f"{risparmio:,.0f}"
+        rc["risparmio_km"][1].value = f"km risparmiati ({risparmio / rb.km * 100:.1f} %)"
+        rc["risparmio_eur"][0].value = euro_breve
+        rc["risparmio_eur"][1].value = "EUR risparmiati"
         self._view.update_page()
 
     def handleSalvaParametri(self, e):
@@ -97,7 +161,14 @@ class Controller:
         self._baseline = None
         self._piano = None
 
-        self._riempiParametri()
+
+        self._view.riga_parametri.controls.clear()
+        self._view.txt_parametri.clear()
+        for nome, dati in self._model.getParametri().items():
+            campo = ft.TextField(label=nome.replace("_", " "), dense=True, width=190,
+                                 value=f"{dati['valore']:g}", helper_text=dati["unita"])
+            self._view.txt_parametri[nome] = campo
+            self._view.riga_parametri.controls.append(campo)
 
         self._view.create_alert("Parametri salvati, ricalcolare i piani")
         self._view.update_page()
@@ -105,36 +176,134 @@ class Controller:
     # Scheda 2: confronto con il calendario reale
 
     def handleAnalizzaReale(self, e):
-        selezione = self._selezione()
-        if selezione is None:
+        stagione_id = self._view.dd_stagione.value
+        team_id = self._view.dd_squadra.value
+        if not stagione_id or not team_id:
+            self._view.create_alert("Selezionare squadra e stagione")
             return
-        stagione_id, team_id = selezione
 
         self._baseline = self._model.analizzaBaseline(stagione_id, team_id)
         m = self._baseline.metriche
-        elementi = [
-            f"Calendario realmente disputato - {team_id}, stagione {stagione_id}",
-            self._riepilogo(self._baseline),
-            "",
-            "Viaggi effettivamente compiuti",
-            self._dettaglioViaggi(self._baseline),
+
+
+        voci = [
+            ("viaggi", m.viaggi),
+            ("chilometri", f"{m.km:,.0f}"),
+            ("tratte aeree", m.tratte),
+            ("trasferimenti", m.trasferimenti),
+            ("giorni fuori sede", m.giorni_fuori),
+            ("costo stimato", f"{self._baseline.costo.totale:,.0f} EUR"),
         ]
-        self._scrivi(self._view.lista_confronto, elementi)
+        riepilogo = self._tabella(["metrica", "valore"], voci, numeriche=[1])
+
+        # tabella dettaglio viaggi, con le date del calendario reale
+        sede = self._model.citta(self._baseline.team_id)
+        righe = []
+        for i in range(len(self._baseline.viaggi)):
+            viaggio = self._baseline.viaggi[i]
+            costo = self._model.calcolaCosto(self._model.calcolaMetriche([viaggio])).totale
+            nomi = [sede]
+            for t in viaggio.tappe:
+                nomi.append(self._model.citta(t))
+            nomi.append(sede)
+            righe.append([i + 1, f"{viaggio.km:,.0f}", f"{costo:,.0f}", viaggio.partite,
+                          f"{viaggio.data_inizio:%d/%m} - {viaggio.data_fine:%d/%m}",
+                          viaggio.giorni_effettivi, " -> ".join(nomi)])
+        dettaglio = self._tabella(["#", "km", "costo EUR", "gare", "periodo", "giorni",
+                                   "percorso"], righe, numeriche=[0, 1, 2, 3, 5])
+
+        lista = self._view.lista_confronto
+        lista.controls.clear()
+        lista.controls.append(ft.Text(
+            f"Calendario realmente disputato - {team_id}, stagione {stagione_id}", size=12))
+        lista.controls.append(ft.Row([riepilogo], scroll=ft.ScrollMode.AUTO))
+        lista.controls.append(ft.Text("", size=12))
+        lista.controls.append(ft.Text("Viaggi effettivamente compiuti", size=12))
+        lista.controls.append(ft.Row([dettaglio], scroll=ft.ScrollMode.AUTO))
+
         self._view.testo_confronto.value = (
             f"Baseline: {m.viaggi} viaggi, {m.km:,.0f} km, "
             f"{self._baseline.costo.totale:,.0f} EUR")
-        self._aggiornaRiquadriConfronto()
+
+
+        rc = self._view.riquadri_confronto
+        rc["km_reali"][0].value = f"{m.km:,.0f}"
+        rc["km_reali"][1].value = "km, calendario reale"
+        if self._piano is not None:
+            o = self._piano.metriche
+            risparmio = m.km - o.km
+            euro = self._baseline.costo.totale - self._piano.costo.totale
+            if abs(euro) >= 1_000_000:
+                euro_breve = f"{euro / 1_000_000:.2f} M"
+            elif abs(euro) >= 1_000:
+                euro_breve = f"{euro / 1_000:,.0f} k"
+            else:
+                euro_breve = f"{euro:,.0f}"
+            rc["km_ottimi"][0].value = f"{o.km:,.0f}"
+            rc["km_ottimi"][1].value = "km, piano ottimizzato"
+            rc["risparmio_km"][0].value = f"{risparmio:,.0f}"
+            rc["risparmio_km"][1].value = f"km risparmiati ({risparmio / m.km * 100:.1f} %)"
+            rc["risparmio_eur"][0].value = euro_breve
+            rc["risparmio_eur"][1].value = "EUR risparmiati"
         self._view.update_page()
 
     def handleConfrontoCompleto(self, e):
-        if not self._pronti():
+        if self._baseline is None or self._piano is None:
+            self._view.create_alert("Calcolare prima il piano ottimizzato nella sezione 1")
             return
-        tabella = self._tabella(["voce", "reale", "ottimizzato", "delta"],
-                                self._confrontaPiani(self._baseline, self._piano),
+
+        r, o = self._baseline.metriche, self._piano.metriche
+        cr, co = self._baseline.costo, self._piano.costo
+
+        voci = [
+            ("Chilometri percorsi", r.km, o.km, f"{r.km:,.0f}", f"{o.km:,.0f}"),
+            ("Numero di viaggi", r.viaggi, o.viaggi, str(r.viaggi), str(o.viaggi)),
+            ("Tratte aeree", r.tratte, o.tratte, str(r.tratte), str(o.tratte)),
+            ("Trasferimenti fra gare", r.trasferimenti, o.trasferimenti,
+             str(r.trasferimenti), str(o.trasferimenti)),
+            ("Giorni fuori sede", r.giorni_fuori, o.giorni_fuori,
+             str(r.giorni_fuori), str(o.giorni_fuori)),
+            ("Costo voli", cr.volo_fisso + cr.volo_km, co.volo_fisso + co.volo_km,
+             f"{cr.volo_fisso + cr.volo_km:,.0f} EUR", f"{co.volo_fisso + co.volo_km:,.0f} EUR"),
+            ("Costo alberghi", cr.hotel, co.hotel,
+             f"{cr.hotel:,.0f} EUR", f"{co.hotel:,.0f} EUR"),
+            ("Diarie", cr.diaria, co.diaria,
+             f"{cr.diaria:,.0f} EUR", f"{co.diaria:,.0f} EUR"),
+            ("Costo totale", cr.totale, co.totale,
+             f"{cr.totale:,.0f} EUR", f"{co.totale:,.0f} EUR"),
+        ]
+
+        righe = []
+        for voce, reale, ottimo, testo_reale, testo_ottimo in voci:
+            # variazione percentuale del piano rispetto al reale
+            delta = "" if not reale else f"{(ottimo - reale) / reale * 100:+.1f}%"
+            righe.append([voce, testo_reale, testo_ottimo, delta])
+        tabella = self._tabella(["voce", "reale", "ottimizzato", "delta"], righe,
                                 numeriche=[1, 2, 3])
 
-        self._scrivi(self._view.lista_confronto, ["TABELLA COMPARATIVA", tabella])
-        self._aggiornaRiquadriConfronto()
+        lista = self._view.lista_confronto
+        lista.controls.clear()
+        lista.controls.append(ft.Text("TABELLA COMPARATIVA", size=12))
+        lista.controls.append(ft.Row([tabella], scroll=ft.ScrollMode.AUTO))
+
+        # riquadri della scheda Confronto
+        risparmio = r.km - o.km
+        euro = cr.totale - co.totale
+        if abs(euro) >= 1_000_000:
+            euro_breve = f"{euro / 1_000_000:.2f} M"
+        elif abs(euro) >= 1_000:
+            euro_breve = f"{euro / 1_000:,.0f} k"
+        else:
+            euro_breve = f"{euro:,.0f}"
+        rc = self._view.riquadri_confronto
+        rc["km_reali"][0].value = f"{r.km:,.0f}"
+        rc["km_reali"][1].value = "km, calendario reale"
+        rc["km_ottimi"][0].value = f"{o.km:,.0f}"
+        rc["km_ottimi"][1].value = "km, piano ottimizzato"
+        rc["risparmio_km"][0].value = f"{risparmio:,.0f}"
+        rc["risparmio_km"][1].value = f"km risparmiati ({risparmio / r.km * 100:.1f} %)"
+        rc["risparmio_eur"][0].value = euro_breve
+        rc["risparmio_eur"][1].value = "EUR risparmiati"
         self._view.update_page()
 
     # Scheda 3: analisi
@@ -175,6 +344,7 @@ class Controller:
             riga += [f"{r['km_reali']:,.0f}", f"{r['km_ottimi']:,.0f}",
                      f"{r['risparmio_pct']:.1f}%"]
             righe.append(riga)
+        tabella = self._tabella(intestazioni, righe, numeriche=[0, 2, 3, 4, 5, 6, 7])
 
         if criterio == "costo_ottimo":
             nota = ("Ordinamento per costo ottimizzato (crescente): l'onere sostenuto "
@@ -186,13 +356,14 @@ class Controller:
             nota = ("Ordinamento per risparmio (decrescente): in cima le franchigie a cui una "
                     "pianificazione migliore farebbe risparmiare di piu'.")
 
-        self._scrivi(self._view.lista_gestionale, [
+        lista = self._view.lista_gestionale
+        lista.controls.clear()
+        lista.controls.append(ft.Text(
             f"CONFRONTO FRA LE FRANCHIGIE - stagione {stagione_id}, "
-            f"max {max_partite} gare per viaggio ({durata:.1f} s)",
-            self._tabella(intestazioni, righe, numeriche=[0, 2, 3, 4, 5, 6, 7]),
-            "",
-            nota,
-        ])
+            f"max {max_partite} gare per viaggio ({durata:.1f} s)", size=12))
+        lista.controls.append(ft.Row([tabella], scroll=ft.ScrollMode.AUTO))
+        lista.controls.append(ft.Text("", size=12))
+        lista.controls.append(ft.Text(nota, size=12))
         self._view.update_page()
 
     def handleCentralita(self, e):
@@ -214,41 +385,24 @@ class Controller:
             if classifica[i][0].team_id == self._view.dd_squadra.value:
                 tabella.rows[i].color = colore_evidenziato
 
-        self._scrivi(self._view.lista_centralita, [
-            "CENTRALITA' GEOGRAFICA DELLE SEDI",
+        lista = self._view.lista_centralita
+        lista.controls.clear()
+        lista.controls.append(ft.Text("CENTRALITA' GEOGRAFICA DELLE SEDI", size=12))
+        lista.controls.append(ft.Text(
             f"somma delle distanze verso le altre {altre} arene (grado pesato del nodo)",
-            tabella,
-            "",
+            size=12))
+        lista.controls.append(ft.Row([tabella], scroll=ft.ScrollMode.AUTO))
+        lista.controls.append(ft.Text("", size=12))
+        lista.controls.append(ft.Text(
             "Le sedi in fondo partono svantaggiate: ogni trasferta costa piu' km "
-            "a prescindere da come viene pianificata.",
-        ])
+            "a prescindere da come viene pianificata.", size=12))
         self._view.update_page()
 
-    # Metodi di supporto
-
-    def _riempiParametri(self):
-        self._view.riga_parametri.controls.clear()
-        self._view.txt_parametri.clear()
-        for nome, dati in self._model.getParametri().items():
-            campo = ft.TextField(label=nome.replace("_", " "), dense=True, width=190,
-                                 value=f"{dati['valore']:g}", helper_text=dati["unita"])
-            self._view.txt_parametri[nome] = campo
-            self._view.riga_parametri.controls.append(campo)
-
-    @staticmethod
-    def _scrivi(lista, elementi):
-        # elementi: stringhe (diventano testo) oppure tabelle gia' costruite
-        lista.controls.clear()
-        for elemento in elementi:
-            if isinstance(elemento, str):
-                lista.controls.append(ft.Text(elemento, size=12, selectable=True))
-            else:
-                # scroll orizzontale se la tabella e' piu' larga del riquadro
-                lista.controls.append(ft.Row([elemento], scroll=ft.ScrollMode.AUTO))
+    # metodo di supporto che costruisce una DataTable a partire da titoli e righe
 
     @staticmethod
     def _tabella(intestazioni, righe, numeriche=()):
-        
+        # numeriche: indici delle colonne con numeri, che Flet allinea a destra da solo
         colonne = []
         for i in range(len(intestazioni)):
             colonne.append(ft.DataColumn(ft.Text(intestazioni[i], weight=ft.FontWeight.BOLD),
@@ -261,110 +415,3 @@ class Controller:
                 celle.append(ft.DataCell(ft.Text(str(valore), size=12)))
             tabella.rows.append(ft.DataRow(cells=celle))
         return tabella
-
-    def _selezione(self):
-        stagione_id = self._view.dd_stagione.value
-        team_id = self._view.dd_squadra.value
-        if not stagione_id or not team_id:
-            self._view.create_alert("Selezionare squadra e stagione")
-            return None
-        return stagione_id, team_id
-
-    def _aggiornaRiquadriConfronto(self):
-        valori = {}
-        if self._baseline is not None:
-            valori["km_reali"] = (f"{self._baseline.metriche.km:,.0f}",
-                                  "km, calendario reale")
-        if self._baseline is not None and self._piano is not None:
-            r, o = self._baseline.metriche, self._piano.metriche
-            risparmio = r.km - o.km
-            euro = self._baseline.costo.totale - self._piano.costo.totale
-            valori["km_ottimi"] = (f"{o.km:,.0f}", "km, piano ottimizzato")
-            valori["risparmio_km"] = (f"{risparmio:,.0f}",
-                                      f"km risparmiati ({risparmio / r.km * 100:.1f} %)")
-            valori["risparmio_eur"] = (self._breve(euro), "EUR risparmiati")
-        for chiave in valori:
-            valore = valori[chiave][0]
-            etichetta = valori[chiave][1]
-            self._view.riquadri_confronto[chiave][0].value = valore
-            self._view.riquadri_confronto[chiave][1].value = etichetta
-
-    @staticmethod
-    def _breve(valore):
-        if abs(valore) >= 1_000_000:
-            return f"{valore / 1_000_000:.2f} M"
-        if abs(valore) >= 1_000:
-            return f"{valore / 1_000:,.0f} k"
-        return f"{valore:,.0f}"
-
-    def _pronti(self):
-        if self._baseline is None or self._piano is None:
-            self._view.create_alert("Calcolare prima il piano ottimizzato nella sezione 1")
-            return False
-        return True
-
-    @staticmethod
-    def _delta(reale, ottimo):
-        return "" if not reale else f"{(ottimo - reale) / reale * 100:+.1f}%"
-
-    def _confrontaPiani(self, reale, ottimizzato):
-        r, o = reale.metriche, ottimizzato.metriche
-        cr, co = reale.costo, ottimizzato.costo
-        return [
-            ("Chilometri percorsi", f"{r.km:,.0f}", f"{o.km:,.0f}", self._delta(r.km, o.km)),
-            ("Numero di viaggi", r.viaggi, o.viaggi, self._delta(r.viaggi, o.viaggi)),
-            ("Tratte aeree", r.tratte, o.tratte, self._delta(r.tratte, o.tratte)),
-            ("Trasferimenti fra gare", r.trasferimenti, o.trasferimenti,
-             self._delta(r.trasferimenti, o.trasferimenti)),
-            ("Giorni fuori sede", r.giorni_fuori, o.giorni_fuori,
-             self._delta(r.giorni_fuori, o.giorni_fuori)),
-            ("Costo voli", f"{cr.volo_fisso + cr.volo_km:,.0f} EUR",
-             f"{co.volo_fisso + co.volo_km:,.0f} EUR",
-             self._delta(cr.volo_fisso + cr.volo_km, co.volo_fisso + co.volo_km)),
-            ("Costo alberghi", f"{cr.hotel:,.0f} EUR", f"{co.hotel:,.0f} EUR",
-             self._delta(cr.hotel, co.hotel)),
-            ("Diarie", f"{cr.diaria:,.0f} EUR", f"{co.diaria:,.0f} EUR",
-             self._delta(cr.diaria, co.diaria)),
-            ("Costo totale", f"{cr.totale:,.0f} EUR", f"{co.totale:,.0f} EUR",
-             self._delta(cr.totale, co.totale)),
-        ]
-
-    def _riepilogo(self, piano):
-        m = piano.metriche
-        righe = [
-            ("viaggi", m.viaggi),
-            ("chilometri", f"{m.km:,.0f}"),
-            ("tratte aeree", m.tratte),
-            ("trasferimenti", m.trasferimenti),
-            ("giorni fuori sede", m.giorni_fuori),
-            ("costo stimato", f"{piano.costo.totale:,.0f} EUR"),
-        ]
-        return self._tabella(["metrica", "valore"], righe, numeriche=[1])
-
-    def _dettaglioViaggi(self, piano):
-        # stessa tabella per piano reale e ottimizzato: le date ci sono solo nel reale
-        con_date = len(piano.viaggi) > 0 and piano.viaggi[0].data_inizio is not None
-        intestazioni = ["#", "km", "costo EUR", "gare"]
-        numeriche = [0, 1, 2, 3]
-        if con_date:
-            intestazioni += ["periodo", "giorni"]
-            numeriche.append(5)
-        intestazioni.append("percorso")
-
-        sede = self._model.citta(piano.team_id)
-        righe = []
-        for i in range(len(piano.viaggi)):
-            viaggio = piano.viaggi[i]
-            costo = self._model.calcolaCosto(self._model.calcolaMetriche([viaggio])).totale
-            nomi = [sede]
-            for t in viaggio.tappe:
-                nomi.append(self._model.citta(t))
-            nomi.append(sede)
-
-            riga = [i + 1, f"{viaggio.km:,.0f}", f"{costo:,.0f}", viaggio.partite]
-            if con_date:
-                riga += [f"{viaggio.data_inizio:%d/%m} - {viaggio.data_fine:%d/%m}",
-                         viaggio.giorni_effettivi]
-            riga.append(" -> ".join(nomi))
-            righe.append(riga)
-        return self._tabella(intestazioni, righe, numeriche)
