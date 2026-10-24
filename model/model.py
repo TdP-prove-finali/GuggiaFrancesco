@@ -235,7 +235,6 @@ class Model:
         if corrente:
             viaggi.append(self._viaggioReale(team_id, corrente))
         metriche = self.calcolaMetriche(viaggi)
-        metriche.back_to_back = self._contaBackToBack(partite)
         return Piano(team_id, stagione_id,
                      viaggi, metriche, self.calcolaCosto(metriche))
 
@@ -245,15 +244,6 @@ class Model:
             tappe.append(p.team_casa)
         return Viaggio(tuple(tappe), self.kmPercorso(sede, tappe),
                        partite[0].data, partite[-1].data)
-
-    @staticmethod
-    def _contaBackToBack(partite):
-        conteggio = 0
-        for i in range(len(partite) - 1):
-            prec, succ = partite[i], partite[i + 1]
-            if (succ.data - prec.data).days == 1 and succ.team_casa != prec.team_casa:
-                conteggio += 1
-        return conteggio
 
     def ottimizzaPiano(self, stagione_id, team_id, max_partite, baseline=None) -> Piano:
         if baseline is None:
@@ -291,7 +281,9 @@ class Model:
         # criterio = "costo_ottimo": onere da sostenere, che resta anche pianificando al meglio
         # e dipende solo dalla posizione della sede
         # criterio = "costo_reale":  quanto e' costato davvero il calendario disputato
-        risultati.sort(key=lambda r: r[criterio], reverse=True)
+        # criterio = "risparmio_eur": quanto renderebbe pianificare meglio
+        # costi in ordine crescente (in cima chi spende meno), risparmio in ordine decrescente
+        risultati.sort(key=lambda r: r[criterio], reverse=(criterio == "risparmio_eur"))
         return risultati
 
     def getCentralita(self):

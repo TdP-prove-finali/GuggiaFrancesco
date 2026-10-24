@@ -31,7 +31,6 @@ class View:
 
         self.dd_squadra = None
         self.dd_stagione = None
-        self.testo_stato = None
         self.txt_max_partite = None
         self.riquadri_piano = {}
         self.lista_piano = None
@@ -40,6 +39,7 @@ class View:
         self.lista_confronto = None
         self.riga_parametri = None
         self.txt_parametri = {}
+        self.dd_criterio = None
         self.lista_gestionale = None
         self.lista_centralita = None
 
@@ -53,7 +53,6 @@ class View:
         self.dd_stagione = ft.Dropdown(label="Stagione", width=160, dense=True, filled=True,
             bgcolor=pannello, border_color=bordo, border_radius=10,
             prefix_icon=ft.icons.CALENDAR_MONTH, on_change=self._controller.handleCambioSelezione)
-        self.testo_stato = ft.Text("", italic=True, size=10, color=testo_tenue)
 
         self._schede = [self._scheda_pianificazione(), self._scheda_confronto(),
                         self._scheda_gestionale()]
@@ -79,7 +78,6 @@ class View:
             menu,
             ft.VerticalDivider(width=1, color=bordo),
             ft.Column([self._testata(),
-                       ft.Container(self.testo_stato, padding=ft.padding.only(left=25, top=10)),
                        self._contenuto], expand=True, spacing=0),
         ], expand=True, spacing=0))
         self._controller.fillDDs()
@@ -120,7 +118,7 @@ class View:
         ])
         return ft.Column([
             self._didascalia("Raggruppa le trasferte in viaggi e ne ordina le tappe. Il piano "
-                             "non assegna date: e' il limite inferiore non vincolato."),
+                             "non assegna date."),
             self._pannello([
                 self._titolo_gruppo("Assunti economici"),
                 self.riga_parametri,
@@ -168,6 +166,13 @@ class View:
         ], spacing=15, expand=True, scroll=ft.ScrollMode.AUTO)
 
     def _scheda_gestionale(self):
+        self.dd_criterio = ft.Dropdown(label="Ordina per", width=230, dense=True, filled=True,
+            bgcolor=pannello, border_color=bordo, border_radius=10,
+            prefix_icon=ft.icons.SORT, value="costo_ottimo", options=[
+                ft.dropdown.Option(key="costo_ottimo", text="Costo ottimizzato"),
+                ft.dropdown.Option(key="costo_reale", text="Costo reale"),
+                ft.dropdown.Option(key="risparmio_eur", text="Risparmio"),
+            ])
         self.lista_gestionale = ft.ListView(spacing=0, padding=10)
         self.lista_centralita = ft.ListView(spacing=0, padding=10)
         return ft.Column([
@@ -175,12 +180,12 @@ class View:
                              "pesa la posizione geografica della sede."),
             self._titolo_gruppo("Confronto trasversale"),
             ft.Row([
-                ft.ElevatedButton("Classifica per costo ottimizzato", icon=ft.icons.LEADERBOARD,
+                ft.ElevatedButton("Classifica franchigie", icon=ft.icons.LEADERBOARD,
                                   bgcolor=accento, color="#1A1A1A",
                                   on_click=self._controller.handleConfrontoFranchigie),
-                ft.OutlinedButton("Classifica per costo reale", icon=ft.icons.HISTORY,
-                                  on_click=self._controller.handleConfrontoFranchigieReale),
-            ], wrap=True, spacing=10, run_spacing=10),
+                self.dd_criterio,
+            ], wrap=True, spacing=10, run_spacing=10,
+               vertical_alignment=ft.CrossAxisAlignment.CENTER),
             self._cornice(self.lista_gestionale),
             self._titolo_gruppo("Centralita' geografica delle sedi"),
             ft.OutlinedButton("Classifica delle sedi", icon=ft.icons.PLACE,

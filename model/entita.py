@@ -88,7 +88,6 @@ class Metriche:
     viaggi: int = 0
     tratte: int = 0
     partite: int = 0
-    back_to_back: int = None
 
 
 @dataclass
