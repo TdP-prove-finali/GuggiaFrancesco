@@ -89,9 +89,7 @@ class Model:
         for prossima in tappe:
             if prossima not in parziale:
                 parziale.append(prossima)
-                self._ricorsione(sede, tappe, parziale,
-                                 km_parziale + self.pesoTratta(corrente, prossima),
-                                 prossima)
+                self._ricorsione(sede, tappe, parziale, km_parziale + self.pesoTratta(corrente, prossima), prossima)
                 parziale.pop()
 
     def _costruisciViaggio(self, sede, tappe, data_inizio=None, data_fine=None):
@@ -237,15 +235,13 @@ class Model:
         if corrente:
             viaggi.append(self._viaggioReale(team_id, corrente))
         metriche = self.calcolaMetriche(viaggi)
-        return Piano(team_id, stagione_id,
-                     viaggi, metriche, self.calcolaCosto(metriche))
+        return Piano(team_id, stagione_id, viaggi, metriche, self.calcolaCosto(metriche))
 
     def _viaggioReale(self, sede, partite):
         tappe = []
         for p in partite:
             tappe.append(p.team_casa)
-        return Viaggio(tuple(tappe), self.kmPercorso(sede, tappe),
-                       partite[0].data, partite[-1].data)
+        return Viaggio(tuple(tappe), self.kmPercorso(sede, tappe), partite[0].data, partite[-1].data)
 
     def ottimizzaPiano(self, stagione_id, team_id, max_partite, baseline=None) -> Piano:
         if baseline is None:
@@ -261,8 +257,7 @@ class Model:
             viaggi.append(self._costruisciViaggio(team_id, g))
         viaggi.sort(key=lambda v: v.km, reverse=True)
         metriche = self.calcolaMetriche(viaggi)
-        return Piano(team_id, stagione_id,
-                     viaggi, metriche, self.calcolaCosto(metriche))
+        return Piano(team_id, stagione_id, viaggi, metriche, self.calcolaCosto(metriche))
 
     def confrontoFranchigie(self, stagione_id, max_partite, criterio="costo_ottimo"):
         risultati = []

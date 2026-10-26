@@ -18,13 +18,11 @@ class Controller:
         nodi, archi = self._model.getGraphDetails()
 
         for squadra in self._model.getSquadre():
-            self._view.dd_squadra.options.append(
-                ft.dropdown.Option(key=squadra.team_id, text=f"{squadra.nome} ({squadra.team_id})"))
+            self._view.dd_squadra.options.append(ft.dropdown.Option(key=squadra.team_id, text=f"{squadra.nome} ({squadra.team_id})"))
 
         stagioni = self._model.getStagioni()
         for stagione in stagioni:
-            self._view.dd_stagione.options.append(
-                ft.dropdown.Option(key=stagione.stagione_id, text=stagione.stagione_id))
+            self._view.dd_stagione.options.append(ft.dropdown.Option(key=stagione.stagione_id, text=stagione.stagione_id))
         if stagioni:
             self._view.dd_stagione.value = stagioni[0].stagione_id
 
@@ -32,8 +30,7 @@ class Controller:
         self._view.riga_parametri.controls.clear()
         self._view.txt_parametri.clear()
         for nome, dati in self._model.getParametri().items():
-            campo = ft.TextField(label=nome.replace("_", " "), dense=True, width=190,
-                                 value=f"{dati['valore']:g}", helper_text=dati["unita"])
+            campo = ft.TextField(label=nome.replace("_", " "), dense=True, width=190, value=f"{dati['valore']:g}", helper_text=dati["unita"])
             self._view.txt_parametri[nome] = campo
             self._view.riga_parametri.controls.append(campo)
 
@@ -80,8 +77,7 @@ class Controller:
 
         avvio = time.perf_counter()
         self._baseline = self._model.analizzaBaseline(stagione_id, team_id)
-        self._piano = self._model.ottimizzaPiano(
-            stagione_id, team_id, max_partite, self._baseline)
+        self._piano = self._model.ottimizzaPiano(stagione_id, team_id, max_partite, self._baseline)
         durata = time.perf_counter() - avvio
         m = self._piano.metriche
 
@@ -106,19 +102,15 @@ class Controller:
             for t in viaggio.tappe:
                 nomi.append(self._model.citta(t))
             nomi.append(sede)
-            righe.append([i + 1, f"{viaggio.km:,.0f}", f"{costo:,.0f}", viaggio.partite,
-                          " -> ".join(nomi)])
-        dettaglio = self._tabella(["#", "km", "costo EUR", "gare", "percorso"], righe,
-                                  numeriche=[0, 1, 2, 3])
+            righe.append([i + 1, f"{viaggio.km:,.0f}", f"{costo:,.0f}", viaggio.partite, " -> ".join(nomi)])
+        dettaglio = self._tabella(["#", "km", "costo EUR", "gare", "percorso"], righe, numeriche=[0, 1, 2, 3])
 
         lista = self._view.lista_piano
         lista.controls.clear()
-        lista.controls.append(ft.Text(
-            f"Piano ottimizzato (max {max_partite} gare per viaggio), calcolato in {durata:.2f} s",
-            size=12))
+        lista.controls.append(ft.Text(f"Piano ottimizzato (max {max_partite} gare per viaggio), calcolato in {durata:.2f} s", size=15))
         lista.controls.append(ft.Row([riepilogo], scroll=ft.ScrollMode.AUTO))
-        lista.controls.append(ft.Text("", size=12))
-        lista.controls.append(ft.Text("Dettaglio dei viaggi", size=12))
+        lista.controls.append(ft.Text("", size=15))
+        lista.controls.append(ft.Text("Dettaglio dei viaggi", size=15))
         lista.controls.append(ft.Row([dettaglio], scroll=ft.ScrollMode.AUTO))
 
 
@@ -175,8 +167,7 @@ class Controller:
         self._view.riga_parametri.controls.clear()
         self._view.txt_parametri.clear()
         for nome, dati in self._model.getParametri().items():
-            campo = ft.TextField(label=nome.replace("_", " "), dense=True, width=190,
-                                 value=f"{dati['valore']:g}", helper_text=dati["unita"])
+            campo = ft.TextField(label=nome.replace("_", " "), dense=True, width=190, value=f"{dati['valore']:g}", helper_text=dati["unita"])
             self._view.txt_parametri[nome] = campo
             self._view.riga_parametri.controls.append(campo)
 
@@ -223,21 +214,17 @@ class Controller:
             righe.append([i + 1, f"{viaggio.km:,.0f}", f"{costo:,.0f}", viaggio.partite,
                           f"{viaggio.data_inizio:%d/%m} - {viaggio.data_fine:%d/%m}",
                           viaggio.giorni_effettivi, " -> ".join(nomi)])
-        dettaglio = self._tabella(["#", "km", "costo EUR", "gare", "periodo", "giorni",
-                                   "percorso"], righe, numeriche=[0, 1, 2, 3, 5])
+        dettaglio = self._tabella(["#", "km", "costo EUR", "gare", "periodo", "giorni", "percorso"], righe, numeriche=[0, 1, 2, 3, 5])
 
         lista = self._view.lista_confronto
         lista.controls.clear()
-        lista.controls.append(ft.Text(
-            f"Calendario realmente disputato - {team_id}, stagione {stagione_id}", size=12))
+        lista.controls.append(ft.Text(f"Calendario realmente disputato - {team_id}, stagione {stagione_id}", size=15))
         lista.controls.append(ft.Row([riepilogo], scroll=ft.ScrollMode.AUTO))
-        lista.controls.append(ft.Text("", size=12))
-        lista.controls.append(ft.Text("Viaggi effettivamente compiuti", size=12))
+        lista.controls.append(ft.Text("", size=15))
+        lista.controls.append(ft.Text("Viaggi effettivamente compiuti", size=15))
         lista.controls.append(ft.Row([dettaglio], scroll=ft.ScrollMode.AUTO))
 
-        self._view.testo_confronto.value = (
-            f"Baseline: {m.viaggi} viaggi, {m.km:,.0f} km, "
-            f"{self._baseline.costo.totale:,.0f} EUR")
+        self._view.testo_confronto.value = f"Baseline: {m.viaggi} viaggi, {m.km:,.0f} km, {self._baseline.costo.totale:,.0f} EUR"
 
 
         rc = self._view.riquadri_confronto
@@ -299,12 +286,11 @@ class Controller:
             # variazione percentuale del piano rispetto al reale
             delta = "" if not reale else f"{(ottimo - reale) / reale * 100:+.1f}%"
             righe.append([voce, testo_reale, testo_ottimo, delta])
-        tabella = self._tabella(["voce", "reale", "ottimizzato", "delta"], righe,
-                                numeriche=[1, 2, 3])
+        tabella = self._tabella(["voce", "reale", "ottimizzato", "delta"], righe, numeriche=[1, 2, 3])
 
         lista = self._view.lista_confronto
         lista.controls.clear()
-        lista.controls.append(ft.Text("TABELLA COMPARATIVA", size=12))
+        lista.controls.append(ft.Text("TABELLA COMPARATIVA", size=15))
         lista.controls.append(ft.Row([tabella], scroll=ft.ScrollMode.AUTO))
 
         # riquadri della scheda Confronto
@@ -354,8 +340,7 @@ class Controller:
             "costo_reale": ["costo_reale", "costo_ottimo", "risparmio_eur"],
             "risparmio_eur": ["risparmio_eur", "costo_reale", "costo_ottimo"],
         }
-        titoli = {"costo_ottimo": "costo ottimo", "costo_reale": "costo reale",
-                  "risparmio_eur": "risparmio EUR"}
+        titoli = {"costo_ottimo": "costo ottimo", "costo_reale": "costo reale", "risparmio_eur": "risparmio EUR"}
         costi = ordine_costi[criterio]
 
         intestazioni = ["#", "squadra"]
@@ -369,29 +354,23 @@ class Controller:
             riga = [i + 1, r["nome"]]
             for chiave in costi:
                 riga.append(f"{r[chiave]:,.0f}")
-            riga += [f"{r['km_reali']:,.0f}", f"{r['km_ottimi']:,.0f}",
-                     f"{r['risparmio_pct']:.1f}%"]
+            riga += [f"{r['km_reali']:,.0f}", f"{r['km_ottimi']:,.0f}", f"{r['risparmio_pct']:.1f}%"]
             righe.append(riga)
         tabella = self._tabella(intestazioni, righe, numeriche=[0, 2, 3, 4, 5, 6, 7])
 
         if criterio == "costo_ottimo":
-            nota = ("Ordinamento per costo ottimizzato (crescente): l'onere sostenuto "
-                    "pianificando al meglio le trasferte.")
+            nota = "Ordinamento per costo ottimizzato (crescente): l'onere sostenuto pianificando al meglio le trasferte."
         elif criterio == "costo_reale":
-            nota = ("Ordinamento per costo reale (crescente): quanto e' costato davvero "
-                    "il calendario disputato.")
+            nota = "Ordinamento per costo reale (crescente): quanto e' costato davvero il calendario disputato."
         else:
-            nota = ("Ordinamento per risparmio (decrescente): in cima le franchigie a cui una "
-                    "pianificazione migliore farebbe risparmiare di piu'.")
+            nota = "Ordinamento per risparmio (decrescente): in cima le franchigie a cui una pianificazione migliore farebbe risparmiare di piu'."
 
         lista = self._view.lista_gestionale
         lista.controls.clear()
-        lista.controls.append(ft.Text(
-            f"CONFRONTO FRA LE FRANCHIGIE - stagione {stagione_id}, "
-            f"max {max_partite} gare per viaggio ({durata:.1f} s)", size=12))
+        lista.controls.append(ft.Text(f"CONFRONTO FRA LE FRANCHIGIE - stagione {stagione_id}, max {max_partite} gare per viaggio ({durata:.1f} s)", size=15))
         lista.controls.append(ft.Row([tabella], scroll=ft.ScrollMode.AUTO))
-        lista.controls.append(ft.Text("", size=12))
-        lista.controls.append(ft.Text(nota, size=12))
+        lista.controls.append(ft.Text("", size=15))
+        lista.controls.append(ft.Text(nota, size=15))
 
         self._view.btn_franchigie.disabled = False
         self._view.stato_franchigie.value = f"Classifica aggiornata ({durata:.1f} s)"
@@ -410,10 +389,8 @@ class Controller:
         for i in range(len(classifica)):
             arena = classifica[i][0]
             km = classifica[i][1]
-            righe.append([i + 1, str(arena), f"{km:,.0f}", f"{km / altre:,.0f}",
-                          f"{(km - minimo) / minimo * 100:+.0f}%"])
-        tabella = self._tabella(["#", "sede", "km totali", "km medi", "vs prima"], righe,
-                                numeriche=[0, 2, 3, 4])
+            righe.append([i + 1, str(arena), f"{km:,.0f}", f"{km / altre:,.0f}", f"{(km - minimo) / minimo * 100:+.0f}%"])
+        tabella = self._tabella(["#", "sede", "km totali", "km medi", "vs prima"], righe, numeriche=[0, 2, 3, 4])
 
         # la squadra selezionata nel menu viene evidenziata colorando la sua riga
         for i in range(len(classifica)):
@@ -422,15 +399,11 @@ class Controller:
 
         lista = self._view.lista_centralita
         lista.controls.clear()
-        lista.controls.append(ft.Text("CENTRALITA' GEOGRAFICA DELLE SEDI", size=12))
-        lista.controls.append(ft.Text(
-            f"somma delle distanze verso le altre {altre} arene (grado pesato del nodo)",
-            size=12))
+        lista.controls.append(ft.Text("CENTRALITA' GEOGRAFICA DELLE SEDI", size=15))
+        lista.controls.append(ft.Text(f"somma delle distanze verso le altre {altre} arene (grado pesato del nodo)", size=15))
         lista.controls.append(ft.Row([tabella], scroll=ft.ScrollMode.AUTO))
-        lista.controls.append(ft.Text("", size=12))
-        lista.controls.append(ft.Text(
-            "Le sedi in fondo partono svantaggiate: ogni trasferta costa piu' km "
-            "a prescindere da come viene pianificata.", size=12))
+        lista.controls.append(ft.Text("", size=15))
+        lista.controls.append(ft.Text("Le sedi in fondo partono svantaggiate: ogni trasferta costa piu' km a prescindere da come viene pianificata.", size=15))
 
         self._view.btn_centralita.disabled = False
         self._view.stato_centralita.value = "Classifica aggiornata"
@@ -443,13 +416,11 @@ class Controller:
         # numeriche: indici delle colonne con numeri, che Flet allinea a destra da solo
         colonne = []
         for i in range(len(intestazioni)):
-            colonne.append(ft.DataColumn(ft.Text(intestazioni[i], weight=ft.FontWeight.BOLD),
-                                         numeric=i in numeriche))
-        tabella = ft.DataTable(columns=colonne, column_spacing=25, heading_row_height=36,
-                               data_row_min_height=30, data_row_max_height=30)
+            colonne.append(ft.DataColumn(ft.Text(intestazioni[i], weight=ft.FontWeight.BOLD), numeric=i in numeriche))
+        tabella = ft.DataTable(columns=colonne, column_spacing=25, heading_row_height=35, data_row_min_height=30, data_row_max_height=30)
         for riga in righe:
             celle = []
             for valore in riga:
-                celle.append(ft.DataCell(ft.Text(str(valore), size=12)))
+                celle.append(ft.DataCell(ft.Text(str(valore), size=15)))
             tabella.rows.append(ft.DataRow(cells=celle))
         return tabella

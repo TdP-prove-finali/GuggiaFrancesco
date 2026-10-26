@@ -63,10 +63,8 @@ class View:
             bgcolor=pannello, border_color=bordo, border_radius=10,
             prefix_icon=ft.icons.CALENDAR_MONTH, on_change=self._controller.handleCambioSelezione)
 
-        self._schede = [self._scheda_pianificazione(), self._scheda_confronto(),
-                        self._scheda_gestionale()]
-        self._contenuto = ft.Container(self._schede[0], expand=True,
-                                       padding=ft.padding.symmetric(horizontal=25, vertical=15))
+        self._schede = [self._scheda_pianificazione(), self._scheda_confronto(), self._scheda_gestionale()]
+        self._contenuto = ft.Container(self._schede[0], expand=True, padding=ft.padding.symmetric(horizontal=25, vertical=15))
 
         menu = ft.NavigationRail(
             selected_index=0, label_type=ft.NavigationRailLabelType.ALL, min_width=95,
@@ -126,7 +124,7 @@ class View:
         self.btn_calcola = ft.ElevatedButton("Calcola piano ottimizzato", icon=ft.icons.PLAY_ARROW,
                                              bgcolor=accento, color="#1A1A1A",
                                              on_click=self._controller.handleCalcolaPiano)
-        self.stato_piano = ft.Text("", size=11, italic=True, color=testo_tenue)
+        self.stato_piano = ft.Text("", size=15, italic=True, color=testo_tenue)
         return ft.Column([
             self._didascalia("Raggruppa le trasferte in viaggi e ne ordina le tappe. Il piano "
                              "non assegna date."),
@@ -161,13 +159,12 @@ class View:
             ("risparmio_eur", ft.icons.SAVINGS, colore_denaro, "EUR risparmiati",
              "costo reale - costo piano"),
         ])
-        self.btn_reale = ft.OutlinedButton("Analizza calendario reale", icon=ft.icons.CALENDAR_MONTH,
-                                           on_click=self._controller.handleAnalizzaReale)
+        self.btn_reale = ft.OutlinedButton("Analizza calendario reale", icon=ft.icons.CALENDAR_MONTH, on_click=self._controller.handleAnalizzaReale)
         self.btn_comparativa = ft.ElevatedButton("Tabella comparativa completa",
                                                  icon=ft.icons.TABLE_CHART,
                                                  bgcolor=accento, color="#1A1A1A",
                                                  on_click=self._controller.handleConfrontoCompleto)
-        self.stato_confronto = ft.Text("", size=11, italic=True, color=testo_tenue)
+        self.stato_confronto = ft.Text("", size=15, italic=True, color=testo_tenue)
         return ft.Column([
             self._didascalia("Confronta il calendario realmente disputato con il piano costruito "
                              "nella sezione Piano."),
@@ -195,10 +192,9 @@ class View:
         self.btn_franchigie = ft.ElevatedButton("Classifica franchigie", icon=ft.icons.LEADERBOARD,
                                                 bgcolor=accento, color="#1A1A1A",
                                                 on_click=self._controller.handleConfrontoFranchigie)
-        self.stato_franchigie = ft.Text("", size=11, italic=True, color=testo_tenue)
-        self.btn_centralita = ft.OutlinedButton("Classifica delle sedi", icon=ft.icons.PLACE,
-                                                on_click=self._controller.handleCentralita)
-        self.stato_centralita = ft.Text("", size=11, italic=True, color=testo_tenue)
+        self.stato_franchigie = ft.Text("", size=15, italic=True, color=testo_tenue)
+        self.btn_centralita = ft.OutlinedButton("Classifica delle sedi", icon=ft.icons.PLACE, on_click=self._controller.handleCentralita)
+        self.stato_centralita = ft.Text("", size=15, italic=True, color=testo_tenue)
         return ft.Column([
             self._didascalia("Quali franchigie hanno il margine di miglioramento maggiore e quanto "
                              "pesa la posizione geografica della sede."),
@@ -220,22 +216,19 @@ class View:
 
     @staticmethod
     def _didascalia(testo):
-        return ft.Text(testo, italic=True, size=10, color=testo_tenue)
+        return ft.Text(testo, italic=True, size=15, color=testo_tenue)
 
     @staticmethod
     def _titolo_gruppo(testo):
-        return ft.Text(testo.upper(), size=10, weight=ft.FontWeight.BOLD, color=accento,
-                       style=ft.TextStyle(letter_spacing=1.5))
+        return ft.Text(testo.upper(), size=10, weight=ft.FontWeight.BOLD, color=accento, style=ft.TextStyle(letter_spacing=1.5))
 
     @staticmethod
     def _pannello(controlli):
-        return ft.Container(ft.Column(controlli, spacing=10), padding=20, border_radius=10,
-                            bgcolor=pannello, border=ft.border.all(1, bordo))
+        return ft.Container(ft.Column(controlli, spacing=10), padding=20, border_radius=10, bgcolor=pannello, border=ft.border.all(1, bordo))
 
     @staticmethod
     def _cornice(contenuto):
-        return ft.Container(contenuto, height=altezza_output, border_radius=10,
-                            bgcolor=fondo_output, border=ft.border.all(1, bordo))
+        return ft.Container(contenuto, height=altezza_output, border_radius=10, bgcolor=fondo_output, border=ft.border.all(1, bordo))
 
     def _crea_riquadri(self, deposito, definizioni):
         riga = ft.Row(spacing=10, run_spacing=10, wrap=True)

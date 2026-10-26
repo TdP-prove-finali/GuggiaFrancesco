@@ -78,8 +78,7 @@ class DAO:
                    ORDER BY data"""
         cursor.execute(query, (stagione_id, team_id, team_id))
         for row in cursor:
-            results.append(Partita(row["data"], row["team_casa"],
-                                   row["team_ospite"], bool(row["sede_neutra"])))
+            results.append(Partita(row["data"], row["team_casa"], row["team_ospite"], bool(row["sede_neutra"])))
         cursor.close()
         conn.close()
         return results
