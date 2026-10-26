@@ -122,7 +122,6 @@ class Controller:
         lista.controls.append(ft.Row([dettaglio], scroll=ft.ScrollMode.AUTO))
 
 
-        r = self._baseline.metriche.km
         costo_totale = self._piano.costo.totale
         if costo_totale >= 1_000_000:
             costo_breve = f"{costo_totale / 1_000_000:.2f} M"
@@ -130,16 +129,15 @@ class Controller:
             costo_breve = f"{costo_totale / 1_000:,.0f} k"
         else:
             costo_breve = f"{costo_totale:,.0f}"
-        # variazione con segno: negativa se il piano percorre meno km del reale
-        self._view.riquadri_piano["risparmio"][0].value = f"{(m.km - r) / r * 100:+.1f}%"
         self._view.riquadri_piano["viaggi"][0].value = str(m.viaggi)
-        self._view.riquadri_piano["km"][0].value = f"{m.km:,.0f}"
+        self._view.riquadri_piano["km"][0].value = f"{m.km:,.0f} km"
         self._view.riquadri_piano["costo"][0].value = costo_breve
 
 
         o = self._piano.metriche
         rb = self._baseline.metriche
-        risparmio = rb.km - o.km
+        # variazione km del piano rispetto al reale (negativa = km risparmiati)
+        variazione = o.km - rb.km
         euro = self._baseline.costo.totale - self._piano.costo.totale
         if abs(euro) >= 1_000_000:
             euro_breve = f"{euro / 1_000_000:.2f} M"
@@ -148,12 +146,12 @@ class Controller:
         else:
             euro_breve = f"{euro:,.0f}"
         rc = self._view.riquadri_confronto
-        rc["km_reali"][0].value = f"{rb.km:,.0f}"
-        rc["km_reali"][1].value = "km, calendario reale"
-        rc["km_ottimi"][0].value = f"{o.km:,.0f}"
-        rc["km_ottimi"][1].value = "km, piano ottimizzato"
-        rc["risparmio_km"][0].value = f"{risparmio:,.0f}"
-        rc["risparmio_km"][1].value = f"km risparmiati ({risparmio / rb.km * 100:.1f} %)"
+        rc["km_reali"][0].value = f"{rb.km:,.0f} km"
+        rc["km_reali"][1].value = "calendario reale"
+        rc["km_ottimi"][0].value = f"{o.km:,.0f} km"
+        rc["km_ottimi"][1].value = "piano ottimizzato"
+        rc["risparmio_km"][0].value = f"{variazione:+,.0f} km"
+        rc["risparmio_km"][1].value = f"variazione km vs reale ({variazione / rb.km * 100:+.1f} %)"
         rc["risparmio_eur"][0].value = euro_breve
         rc["risparmio_eur"][1].value = "EUR risparmiati"
 
@@ -243,11 +241,11 @@ class Controller:
 
 
         rc = self._view.riquadri_confronto
-        rc["km_reali"][0].value = f"{m.km:,.0f}"
-        rc["km_reali"][1].value = "km, calendario reale"
+        rc["km_reali"][0].value = f"{m.km:,.0f} km"
+        rc["km_reali"][1].value = "calendario reale"
         if self._piano is not None:
             o = self._piano.metriche
-            risparmio = m.km - o.km
+            variazione = o.km - m.km
             euro = self._baseline.costo.totale - self._piano.costo.totale
             if abs(euro) >= 1_000_000:
                 euro_breve = f"{euro / 1_000_000:.2f} M"
@@ -255,10 +253,10 @@ class Controller:
                 euro_breve = f"{euro / 1_000:,.0f} k"
             else:
                 euro_breve = f"{euro:,.0f}"
-            rc["km_ottimi"][0].value = f"{o.km:,.0f}"
-            rc["km_ottimi"][1].value = "km, piano ottimizzato"
-            rc["risparmio_km"][0].value = f"{risparmio:,.0f}"
-            rc["risparmio_km"][1].value = f"km risparmiati ({risparmio / m.km * 100:.1f} %)"
+            rc["km_ottimi"][0].value = f"{o.km:,.0f} km"
+            rc["km_ottimi"][1].value = "piano ottimizzato"
+            rc["risparmio_km"][0].value = f"{variazione:+,.0f} km"
+            rc["risparmio_km"][1].value = f"variazione km vs reale ({variazione / m.km * 100:+.1f} %)"
             rc["risparmio_eur"][0].value = euro_breve
             rc["risparmio_eur"][1].value = "EUR risparmiati"
 
@@ -310,7 +308,7 @@ class Controller:
         lista.controls.append(ft.Row([tabella], scroll=ft.ScrollMode.AUTO))
 
         # riquadri della scheda Confronto
-        risparmio = r.km - o.km
+        variazione = o.km - r.km
         euro = cr.totale - co.totale
         if abs(euro) >= 1_000_000:
             euro_breve = f"{euro / 1_000_000:.2f} M"
@@ -319,12 +317,12 @@ class Controller:
         else:
             euro_breve = f"{euro:,.0f}"
         rc = self._view.riquadri_confronto
-        rc["km_reali"][0].value = f"{r.km:,.0f}"
-        rc["km_reali"][1].value = "km, calendario reale"
-        rc["km_ottimi"][0].value = f"{o.km:,.0f}"
-        rc["km_ottimi"][1].value = "km, piano ottimizzato"
-        rc["risparmio_km"][0].value = f"{risparmio:,.0f}"
-        rc["risparmio_km"][1].value = f"km risparmiati ({risparmio / r.km * 100:.1f} %)"
+        rc["km_reali"][0].value = f"{r.km:,.0f} km"
+        rc["km_reali"][1].value = "calendario reale"
+        rc["km_ottimi"][0].value = f"{o.km:,.0f} km"
+        rc["km_ottimi"][1].value = "piano ottimizzato"
+        rc["risparmio_km"][0].value = f"{variazione:+,.0f} km"
+        rc["risparmio_km"][1].value = f"variazione km vs reale ({variazione / r.km * 100:+.1f} %)"
         rc["risparmio_eur"][0].value = euro_breve
         rc["risparmio_eur"][1].value = "EUR risparmiati"
 

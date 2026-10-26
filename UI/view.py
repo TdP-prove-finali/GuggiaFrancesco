@@ -118,12 +118,10 @@ class View:
         riquadri = self._crea_riquadri(self.riquadri_piano, [
             ("viaggi", ft.icons.LUGGAGE, colore_viaggi, "viaggi",
              "gruppi di trasferte consecutive, al massimo N gare ciascuno"),
-            ("km", ft.icons.FLIGHT_TAKEOFF, colore_percorso, "chilometri",
+            ("km", ft.icons.FLIGHT_TAKEOFF, colore_percorso, "chilometri percorsi",
              "somma dei giri ottimi sede -> tappe -> sede"),
             ("costo", ft.icons.EURO, colore_denaro, "costo stimato, EUR",
              "voli (quota fissa + km) + hotel + diarie, con gli assunti economici"),
-            ("risparmio", ft.icons.TRENDING_DOWN, colore_risparmio, "variazione km vs reale",
-             "(km piano - km reali) / km reali"),
         ])
         self.btn_calcola = ft.ElevatedButton("Calcola piano ottimizzato", icon=ft.icons.PLAY_ARROW,
                                              bgcolor=accento, color="#1A1A1A",
@@ -154,12 +152,12 @@ class View:
         self.testo_confronto = ft.Text("", weight=ft.FontWeight.BOLD, size=15)
         self.lista_confronto = ft.ListView(spacing=0, padding=10)
         riquadri = self._crea_riquadri(self.riquadri_confronto, [
-            ("km_reali", ft.icons.HISTORY, colore_storico, "km, calendario reale",
+            ("km_reali", ft.icons.HISTORY, colore_storico, "calendario reale",
              "viaggi ricostruiti dalle gare esterne consecutive"),
-            ("km_ottimi", ft.icons.FLIGHT_TAKEOFF, colore_percorso, "km, piano ottimizzato",
+            ("km_ottimi", ft.icons.FLIGHT_TAKEOFF, colore_percorso, "piano ottimizzato",
              "km del piano calcolato nella sezione Piano"),
-            ("risparmio_km", ft.icons.TRENDING_DOWN, colore_risparmio, "km risparmiati",
-             "km reali - km piano"),
+            ("risparmio_km", ft.icons.TRENDING_DOWN, colore_risparmio, "variazione km vs reale",
+             "km piano - km reali"),
             ("risparmio_eur", ft.icons.SAVINGS, colore_denaro, "EUR risparmiati",
              "costo reale - costo piano"),
         ])
