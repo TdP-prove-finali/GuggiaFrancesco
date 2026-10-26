@@ -17,6 +17,13 @@
 /*M!100616 SET @OLD_NOTE_VERBOSITY=@@NOTE_VERBOSITY, NOTE_VERBOSITY=0 */;
 
 --
+-- Creazione del database
+--
+
+CREATE DATABASE IF NOT EXISTS `nba_travel` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE `nba_travel`;
+
+--
 -- Table structure for table `arena`
 --
 
