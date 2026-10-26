@@ -223,7 +223,9 @@ class Model:
     def analizzaBaseline(self, stagione_id, team_id) -> Piano:
         partite = DAO.getPartiteSquadra(stagione_id, team_id)
         # le gare esterne consecutive, fino alla gara in casa successiva,
-        # formano un viaggio
+        # formano un viaggio.
+        # Le gare in sede neutra (sede_neutra = 1) sono trattate come giocate
+        # nell'arena della squadra di casa: il database non indica dove si sono disputate
         viaggi, corrente = [], []
         for partita in partite:
             if partita.team_casa == team_id:

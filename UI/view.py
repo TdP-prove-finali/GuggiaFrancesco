@@ -42,6 +42,15 @@ class View:
         self.dd_criterio = None
         self.lista_gestionale = None
         self.lista_centralita = None
+        self.btn_calcola = None
+        self.stato_piano = None
+        self.btn_reale = None
+        self.btn_comparativa = None
+        self.stato_confronto = None
+        self.btn_franchigie = None
+        self.stato_franchigie = None
+        self.btn_centralita = None
+        self.stato_centralita = None
 
     def set_controller(self, controller):
         self._controller = controller
@@ -113,9 +122,13 @@ class View:
              "somma dei giri ottimi sede -> tappe -> sede"),
             ("costo", ft.icons.EURO, colore_denaro, "costo stimato, EUR",
              "voli (quota fissa + km) + hotel + diarie, con gli assunti economici"),
-            ("risparmio", ft.icons.TRENDING_DOWN, colore_risparmio, "km in meno vs reale",
-             "(km reali - km piano) / km reali"),
+            ("risparmio", ft.icons.TRENDING_DOWN, colore_risparmio, "variazione km vs reale",
+             "(km piano - km reali) / km reali"),
         ])
+        self.btn_calcola = ft.ElevatedButton("Calcola piano ottimizzato", icon=ft.icons.PLAY_ARROW,
+                                             bgcolor=accento, color="#1A1A1A",
+                                             on_click=self._controller.handleCalcolaPiano)
+        self.stato_piano = ft.Text("", size=11, italic=True, color=testo_tenue)
         return ft.Column([
             self._didascalia("Raggruppa le trasferte in viaggi e ne ordina le tappe. Il piano "
                              "non assegna date."),
@@ -126,12 +139,12 @@ class View:
                         self.txt_max_partite], wrap=True, spacing=10,
                        vertical_alignment=ft.CrossAxisAlignment.CENTER),
                 ft.Row([
-                    ft.ElevatedButton("Calcola piano ottimizzato", icon=ft.icons.PLAY_ARROW,
-                                      bgcolor=accento, color="#1A1A1A",
-                                      on_click=self._controller.handleCalcolaPiano),
+                    self.btn_calcola,
                     ft.OutlinedButton("Salva parametri", icon=ft.icons.SAVE,
                                       on_click=self._controller.handleSalvaParametri),
-                ], wrap=True, spacing=10, run_spacing=10),
+                    self.stato_piano,
+                ], wrap=True, spacing=10, run_spacing=10,
+                   vertical_alignment=ft.CrossAxisAlignment.CENTER),
             ]),
             riquadri,
             self._cornice(self.lista_piano),
@@ -150,16 +163,22 @@ class View:
             ("risparmio_eur", ft.icons.SAVINGS, colore_denaro, "EUR risparmiati",
              "costo reale - costo piano"),
         ])
+        self.btn_reale = ft.OutlinedButton("Analizza calendario reale", icon=ft.icons.CALENDAR_MONTH,
+                                           on_click=self._controller.handleAnalizzaReale)
+        self.btn_comparativa = ft.ElevatedButton("Tabella comparativa completa",
+                                                 icon=ft.icons.TABLE_CHART,
+                                                 bgcolor=accento, color="#1A1A1A",
+                                                 on_click=self._controller.handleConfrontoCompleto)
+        self.stato_confronto = ft.Text("", size=11, italic=True, color=testo_tenue)
         return ft.Column([
             self._didascalia("Confronta il calendario realmente disputato con il piano costruito "
                              "nella sezione Piano."),
             ft.Row([
-                ft.OutlinedButton("Analizza calendario reale", icon=ft.icons.CALENDAR_MONTH,
-                                  on_click=self._controller.handleAnalizzaReale),
-                ft.ElevatedButton("Tabella comparativa completa", icon=ft.icons.TABLE_CHART,
-                                  bgcolor=accento, color="#1A1A1A",
-                                  on_click=self._controller.handleConfrontoCompleto),
-            ], wrap=True, spacing=10, run_spacing=10),
+                self.btn_reale,
+                self.btn_comparativa,
+                self.stato_confronto,
+            ], wrap=True, spacing=10, run_spacing=10,
+               vertical_alignment=ft.CrossAxisAlignment.CENTER),
             riquadri,
             self.testo_confronto,
             self._cornice(self.lista_confronto),
@@ -175,21 +194,29 @@ class View:
             ])
         self.lista_gestionale = ft.ListView(spacing=0, padding=10)
         self.lista_centralita = ft.ListView(spacing=0, padding=10)
+        self.btn_franchigie = ft.ElevatedButton("Classifica franchigie", icon=ft.icons.LEADERBOARD,
+                                                bgcolor=accento, color="#1A1A1A",
+                                                on_click=self._controller.handleConfrontoFranchigie)
+        self.stato_franchigie = ft.Text("", size=11, italic=True, color=testo_tenue)
+        self.btn_centralita = ft.OutlinedButton("Classifica delle sedi", icon=ft.icons.PLACE,
+                                                on_click=self._controller.handleCentralita)
+        self.stato_centralita = ft.Text("", size=11, italic=True, color=testo_tenue)
         return ft.Column([
             self._didascalia("Quali franchigie hanno il margine di miglioramento maggiore e quanto "
                              "pesa la posizione geografica della sede."),
             self._titolo_gruppo("Confronto trasversale"),
             ft.Row([
-                ft.ElevatedButton("Classifica franchigie", icon=ft.icons.LEADERBOARD,
-                                  bgcolor=accento, color="#1A1A1A",
-                                  on_click=self._controller.handleConfrontoFranchigie),
+                self.btn_franchigie,
                 self.dd_criterio,
+                self.stato_franchigie,
             ], wrap=True, spacing=10, run_spacing=10,
                vertical_alignment=ft.CrossAxisAlignment.CENTER),
             self._cornice(self.lista_gestionale),
             self._titolo_gruppo("Centralita' geografica delle sedi"),
-            ft.OutlinedButton("Classifica delle sedi", icon=ft.icons.PLACE,
-                              on_click=self._controller.handleCentralita),
+            ft.Row([
+                self.btn_centralita,
+                self.stato_centralita,
+            ], spacing=10, vertical_alignment=ft.CrossAxisAlignment.CENTER),
             self._cornice(self.lista_centralita),
         ], spacing=15, expand=True, scroll=ft.ScrollMode.AUTO)
 

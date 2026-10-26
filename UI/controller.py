@@ -47,6 +47,8 @@ class Controller:
         self._view.lista_piano.controls.clear()
         self._view.lista_confronto.controls.clear()
         self._view.testo_confronto.value = ""
+        self._view.stato_piano.value = ""
+        self._view.stato_confronto.value = ""
         for riquadri in (self._view.riquadri_piano, self._view.riquadri_confronto):
             for chiave in riquadri:
                 riquadri[chiave][0].value = "—"
@@ -54,6 +56,7 @@ class Controller:
 
         if e is not None and e.control is self._view.dd_stagione:
             self._view.lista_gestionale.controls.clear()
+            self._view.stato_franchigie.value = ""
         self._view.update_page()
 
     # Scheda 1: pianificazione
@@ -70,6 +73,10 @@ class Controller:
             self._view.create_alert("Selezionare squadra e stagione")
             return
         max_partite = int(self._view.txt_max_partite.value)
+
+        self._view.btn_calcola.disabled = True
+        self._view.stato_piano.value = "In aggiornamento..."
+        self._view.update_page()
 
         avvio = time.perf_counter()
         self._baseline = self._model.analizzaBaseline(stagione_id, team_id)
@@ -123,7 +130,8 @@ class Controller:
             costo_breve = f"{costo_totale / 1_000:,.0f} k"
         else:
             costo_breve = f"{costo_totale:,.0f}"
-        self._view.riquadri_piano["risparmio"][0].value = f"-{(r - m.km) / r * 100:.1f}%"
+        # variazione con segno: negativa se il piano percorre meno km del reale
+        self._view.riquadri_piano["risparmio"][0].value = f"{(m.km - r) / r * 100:+.1f}%"
         self._view.riquadri_piano["viaggi"][0].value = str(m.viaggi)
         self._view.riquadri_piano["km"][0].value = f"{m.km:,.0f}"
         self._view.riquadri_piano["costo"][0].value = costo_breve
@@ -148,6 +156,9 @@ class Controller:
         rc["risparmio_km"][1].value = f"km risparmiati ({risparmio / rb.km * 100:.1f} %)"
         rc["risparmio_eur"][0].value = euro_breve
         rc["risparmio_eur"][1].value = "EUR risparmiati"
+
+        self._view.btn_calcola.disabled = False
+        self._view.stato_piano.value = f"Piano aggiornato ({durata:.2f} s)"
         self._view.update_page()
 
     def handleSalvaParametri(self, e):
@@ -160,7 +171,8 @@ class Controller:
 
         self._baseline = None
         self._piano = None
-
+        self._view.stato_piano.value = ""
+        self._view.stato_confronto.value = ""
 
         self._view.riga_parametri.controls.clear()
         self._view.txt_parametri.clear()
@@ -181,6 +193,10 @@ class Controller:
         if not stagione_id or not team_id:
             self._view.create_alert("Selezionare squadra e stagione")
             return
+
+        self._view.btn_reale.disabled = True
+        self._view.stato_confronto.value = "In aggiornamento..."
+        self._view.update_page()
 
         self._baseline = self._model.analizzaBaseline(stagione_id, team_id)
         m = self._baseline.metriche
@@ -245,12 +261,19 @@ class Controller:
             rc["risparmio_km"][1].value = f"km risparmiati ({risparmio / m.km * 100:.1f} %)"
             rc["risparmio_eur"][0].value = euro_breve
             rc["risparmio_eur"][1].value = "EUR risparmiati"
+
+        self._view.btn_reale.disabled = False
+        self._view.stato_confronto.value = "Calendario reale aggiornato"
         self._view.update_page()
 
     def handleConfrontoCompleto(self, e):
         if self._baseline is None or self._piano is None:
             self._view.create_alert("Calcolare prima il piano ottimizzato nella sezione 1")
             return
+
+        self._view.btn_comparativa.disabled = True
+        self._view.stato_confronto.value = "In aggiornamento..."
+        self._view.update_page()
 
         r, o = self._baseline.metriche, self._piano.metriche
         cr, co = self._baseline.costo, self._piano.costo
@@ -304,6 +327,9 @@ class Controller:
         rc["risparmio_km"][1].value = f"km risparmiati ({risparmio / r.km * 100:.1f} %)"
         rc["risparmio_eur"][0].value = euro_breve
         rc["risparmio_eur"][1].value = "EUR risparmiati"
+
+        self._view.btn_comparativa.disabled = False
+        self._view.stato_confronto.value = "Tabella comparativa aggiornata"
         self._view.update_page()
 
     # Scheda 3: analisi
@@ -315,6 +341,10 @@ class Controller:
             self._view.create_alert("Selezionare una stagione")
             return
         max_partite = int(self._view.txt_max_partite.value)
+
+        self._view.btn_franchigie.disabled = True
+        self._view.stato_franchigie.value = "In aggiornamento... (qualche secondo)"
+        self._view.update_page()
 
         avvio = time.perf_counter()
         risultati = self._model.confrontoFranchigie(stagione_id, max_partite, criterio)
@@ -364,9 +394,16 @@ class Controller:
         lista.controls.append(ft.Row([tabella], scroll=ft.ScrollMode.AUTO))
         lista.controls.append(ft.Text("", size=12))
         lista.controls.append(ft.Text(nota, size=12))
+
+        self._view.btn_franchigie.disabled = False
+        self._view.stato_franchigie.value = f"Classifica aggiornata ({durata:.1f} s)"
         self._view.update_page()
 
     def handleCentralita(self, e):
+        self._view.btn_centralita.disabled = True
+        self._view.stato_centralita.value = "In aggiornamento..."
+        self._view.update_page()
+
         classifica = self._model.getCentralita()
         altre = len(classifica) - 1
         minimo = classifica[0][1]
@@ -396,6 +433,9 @@ class Controller:
         lista.controls.append(ft.Text(
             "Le sedi in fondo partono svantaggiate: ogni trasferta costa piu' km "
             "a prescindere da come viene pianificata.", size=12))
+
+        self._view.btn_centralita.disabled = False
+        self._view.stato_centralita.value = "Classifica aggiornata"
         self._view.update_page()
 
     # metodo di supporto che costruisce una DataTable a partire da titoli e righe
