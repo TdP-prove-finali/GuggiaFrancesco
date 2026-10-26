@@ -166,18 +166,16 @@ class View:
                                                  on_click=self._controller.handleConfrontoCompleto)
         self.stato_confronto = ft.Text("", size=15, italic=True, color=testo_tenue)
         return ft.Column([
-            self._didascalia("Confronta il calendario realmente disputato con il piano costruito "
-                             "nella sezione Piano."),
+            self._didascalia("Confronta il calendario realmente disputato con il piano costruito nella sezione Piano."),
             ft.Row([
                 self.btn_reale,
                 self.btn_comparativa,
-                self.stato_confronto,
-            ], wrap=True, spacing=10, run_spacing=10,
-               vertical_alignment=ft.CrossAxisAlignment.CENTER),
-            riquadri,
-            self.testo_confronto,
-            self._cornice(self.lista_confronto),
-        ], spacing=15, expand=True, scroll=ft.ScrollMode.AUTO)
+                self.stato_confronto,], wrap=True, spacing=10, run_spacing=10,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER),
+                riquadri,
+                self.testo_confronto,
+                self._cornice(self.lista_confronto),
+                ], spacing=15, expand=True, scroll=ft.ScrollMode.AUTO)
 
     def _scheda_gestionale(self):
         self.dd_criterio = ft.Dropdown(label="Ordina per", width=230, dense=True, filled=True,
@@ -189,9 +187,7 @@ class View:
             ])
         self.lista_gestionale = ft.ListView(spacing=0, padding=10)
         self.lista_centralita = ft.ListView(spacing=0, padding=10)
-        self.btn_franchigie = ft.ElevatedButton("Classifica franchigie", icon=ft.icons.LEADERBOARD,
-                                                bgcolor=accento, color="#1A1A1A",
-                                                on_click=self._controller.handleConfrontoFranchigie)
+        self.btn_franchigie = ft.ElevatedButton("Classifica franchigie", icon=ft.icons.LEADERBOARD,bgcolor=accento, color="#1A1A1A",on_click=self._controller.handleConfrontoFranchigie)
         self.stato_franchigie = ft.Text("", size=15, italic=True, color=testo_tenue)
         self.btn_centralita = ft.OutlinedButton("Classifica delle sedi", icon=ft.icons.PLACE, on_click=self._controller.handleCentralita)
         self.stato_centralita = ft.Text("", size=15, italic=True, color=testo_tenue)
