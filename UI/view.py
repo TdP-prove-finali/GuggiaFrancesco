@@ -28,6 +28,7 @@ class View:
         self._controller = None
         self._schede = []
         self._contenuto = None
+        self._pulsanti_schede = []
 
         self.dd_squadra = None
         self.dd_stagione = None
@@ -58,44 +59,38 @@ class View:
     def load_interface(self):
         self.dd_squadra = ft.Dropdown(label="Squadra", width=280, dense=True, filled=True,
             bgcolor=pannello, border_color=bordo, border_radius=10,
-            prefix_icon=ft.icons.GROUPS, on_change=self._controller.handleCambioSelezione)
+            on_change=self._controller.handleCambioSelezione)
         self.dd_stagione = ft.Dropdown(label="Stagione", width=160, dense=True, filled=True,
             bgcolor=pannello, border_color=bordo, border_radius=10,
-            prefix_icon=ft.icons.CALENDAR_MONTH, on_change=self._controller.handleCambioSelezione)
+            on_change=self._controller.handleCambioSelezione)
 
         self._schede = [self._scheda_pianificazione(), self._scheda_confronto(), self._scheda_gestionale()]
         self._contenuto = ft.Container(self._schede[0], expand=True, padding=ft.padding.symmetric(horizontal=25, vertical=15))
 
-        menu = ft.NavigationRail(
-            selected_index=0, label_type=ft.NavigationRailLabelType.ALL, min_width=95,
-            bgcolor=pannello, indicator_color=ft.colors.with_opacity(0.25, accento),
-            leading=ft.Container(ft.Icon(ft.icons.SPORTS_BASKETBALL, color=accento, size=40),
-                                 padding=ft.padding.only(top=20, bottom=15)),
-            destinations=[
-                ft.NavigationRailDestination(icon=ft.icons.ROUTE_OUTLINED,
-                                             selected_icon=ft.icons.ROUTE, label="Piano"),
-                ft.NavigationRailDestination(icon=ft.icons.COMPARE_ARROWS_OUTLINED,
-                                             selected_icon=ft.icons.COMPARE_ARROWS, label="Confronto"),
-                ft.NavigationRailDestination(icon=ft.icons.INSIGHTS_OUTLINED,
-                                             selected_icon=ft.icons.INSIGHTS, label="Analisi"),
-            ],
-            on_change=self._cambio_scheda)
-
-        self.page.add(ft.Row([
-            menu,
-            ft.VerticalDivider(width=1, color=bordo),
-            ft.Column([self._testata(),
-                       self._contenuto], expand=True, spacing=0),
-        ], expand=True, spacing=0))
+        # navigazione nella testata, sotto il titolo: un pulsante per scheda, quello della scheda aperta e' evidenziato
+        self._pulsanti_schede = [
+            ft.ElevatedButton("Piano", data=0, width=130, bgcolor=accento, color="#1A1A1A", on_click=self._cambio_scheda),
+            ft.ElevatedButton("Confronto", data=1, width=130, bgcolor=pannello, color=ft.colors.WHITE, on_click=self._cambio_scheda),
+            ft.ElevatedButton("Analisi", data=2, width=130, bgcolor=pannello, color=ft.colors.WHITE, on_click=self._cambio_scheda),
+        ]
+        self.page.add(ft.Column([self._testata(), self._contenuto], expand=True, spacing=0))
         self._controller.fillDDs()
         self.update_page()
 
     def _cambio_scheda(self, e):
-        self._contenuto.content = self._schede[e.control.selected_index]
+        indice = e.control.data
+        self._contenuto.content = self._schede[indice]
+        for pulsante in self._pulsanti_schede:
+            if pulsante.data == indice:
+                pulsante.bgcolor = accento
+                pulsante.color = "#1A1A1A"
+            else:
+                pulsante.bgcolor = pannello
+                pulsante.color = ft.colors.WHITE
         self.page.update()
 
     def _testata(self):
-        return ft.Container(
+        return ft.Container(ft.Column([
             ft.Row([
                 ft.Column([
                     ft.Text("PIANO DI TRASFERTA NBA", size=20, weight=ft.FontWeight.BOLD,
@@ -105,6 +100,8 @@ class View:
                 ], spacing=0, tight=True, expand=True),
                 self.dd_squadra, self.dd_stagione,
             ], spacing=10, vertical_alignment=ft.CrossAxisAlignment.CENTER),
+            ft.Row(self._pulsanti_schede, spacing=10),
+        ], spacing=15),
             padding=ft.padding.symmetric(horizontal=25, vertical=15),
             border=ft.border.only(bottom=ft.border.BorderSide(1, bordo)))
 
@@ -114,15 +111,14 @@ class View:
         self.riga_parametri = ft.Row(controls=[], wrap=True, spacing=10, run_spacing=10)
         self.lista_piano = ft.ListView(spacing=0, padding=10)
         riquadri = self._crea_riquadri(self.riquadri_piano, [
-            ("viaggi", ft.icons.LUGGAGE, colore_viaggi, "viaggi",
+            ("viaggi", colore_viaggi, "viaggi",
              "gruppi di trasferte consecutive, al massimo N gare ciascuno"),
-            ("km", ft.icons.FLIGHT_TAKEOFF, colore_percorso, "chilometri percorsi",
+            ("km", colore_percorso, "chilometri percorsi",
              "somma dei giri ottimi sede -> tappe -> sede"),
-            ("costo", ft.icons.EURO, colore_denaro, "costo stimato, EUR",
+            ("costo", colore_denaro, "costo stimato, EUR",
              "voli (quota fissa + km) + hotel + diarie, con gli assunti economici"),
         ])
-        self.btn_calcola = ft.ElevatedButton("Calcola piano ottimizzato", icon=ft.icons.PLAY_ARROW,
-                                             bgcolor=accento, color="#1A1A1A",
+        self.btn_calcola = ft.ElevatedButton("Calcola piano ottimizzato", bgcolor=accento, color="#1A1A1A",
                                              on_click=self._controller.handleCalcolaPiano)
         self.stato_piano = ft.Text("", size=15, italic=True, color=testo_tenue)
         return ft.Column([
@@ -136,8 +132,7 @@ class View:
                        vertical_alignment=ft.CrossAxisAlignment.CENTER),
                 ft.Row([
                     self.btn_calcola,
-                    ft.OutlinedButton("Salva parametri", icon=ft.icons.SAVE,
-                                      on_click=self._controller.handleSalvaParametri),
+                    ft.OutlinedButton("Salva parametri", on_click=self._controller.handleSalvaParametri),
                     self.stato_piano,
                 ], wrap=True, spacing=10, run_spacing=10,
                    vertical_alignment=ft.CrossAxisAlignment.CENTER),
@@ -150,18 +145,17 @@ class View:
         self.testo_confronto = ft.Text("", weight=ft.FontWeight.BOLD, size=15)
         self.lista_confronto = ft.ListView(spacing=0, padding=10)
         riquadri = self._crea_riquadri(self.riquadri_confronto, [
-            ("km_reali", ft.icons.HISTORY, colore_storico, "calendario reale",
+            ("km_reali", colore_storico, "calendario reale",
              "viaggi ricostruiti dalle gare esterne consecutive"),
-            ("km_ottimi", ft.icons.FLIGHT_TAKEOFF, colore_percorso, "piano ottimizzato",
+            ("km_ottimi", colore_percorso, "piano ottimizzato",
              "km del piano calcolato nella sezione Piano"),
-            ("risparmio_km", ft.icons.TRENDING_DOWN, colore_risparmio, "variazione km vs reale",
+            ("risparmio_km", colore_risparmio, "variazione km vs reale",
              "km piano - km reali"),
-            ("risparmio_eur", ft.icons.SAVINGS, colore_denaro, "EUR risparmiati",
+            ("risparmio_eur", colore_denaro, "EUR risparmiati",
              "costo reale - costo piano"),
         ])
-        self.btn_reale = ft.OutlinedButton("Analizza calendario reale", icon=ft.icons.CALENDAR_MONTH, on_click=self._controller.handleAnalizzaReale)
+        self.btn_reale = ft.OutlinedButton("Analizza calendario reale", on_click=self._controller.handleAnalizzaReale)
         self.btn_comparativa = ft.ElevatedButton("Tabella comparativa completa",
-                                                 icon=ft.icons.TABLE_CHART,
                                                  bgcolor=accento, color="#1A1A1A",
                                                  on_click=self._controller.handleConfrontoCompleto)
         self.stato_confronto = ft.Text("", size=15, italic=True, color=testo_tenue)
@@ -180,16 +174,16 @@ class View:
     def _scheda_gestionale(self):
         self.dd_criterio = ft.Dropdown(label="Ordina per", width=230, dense=True, filled=True,
             bgcolor=pannello, border_color=bordo, border_radius=10,
-            prefix_icon=ft.icons.SORT, value="costo_ottimo", options=[
+            value="costo_ottimo", options=[
                 ft.dropdown.Option(key="costo_ottimo", text="Costo ottimizzato"),
                 ft.dropdown.Option(key="costo_reale", text="Costo reale"),
                 ft.dropdown.Option(key="risparmio_eur", text="Risparmio"),
             ])
         self.lista_gestionale = ft.ListView(spacing=0, padding=10)
         self.lista_centralita = ft.ListView(spacing=0, padding=10)
-        self.btn_franchigie = ft.ElevatedButton("Classifica franchigie", icon=ft.icons.LEADERBOARD,bgcolor=accento, color="#1A1A1A",on_click=self._controller.handleConfrontoFranchigie)
+        self.btn_franchigie = ft.ElevatedButton("Classifica franchigie", bgcolor=accento, color="#1A1A1A",on_click=self._controller.handleConfrontoFranchigie)
         self.stato_franchigie = ft.Text("", size=15, italic=True, color=testo_tenue)
-        self.btn_centralita = ft.OutlinedButton("Classifica delle sedi", icon=ft.icons.PLACE, on_click=self._controller.handleCentralita)
+        self.btn_centralita = ft.OutlinedButton("Classifica delle sedi", on_click=self._controller.handleCentralita)
         self.stato_centralita = ft.Text("", size=15, italic=True, color=testo_tenue)
         return ft.Column([
             self._didascalia("Quali franchigie hanno il margine di miglioramento maggiore e quanto "
@@ -228,13 +222,12 @@ class View:
 
     def _crea_riquadri(self, deposito, definizioni):
         riga = ft.Row(spacing=10, run_spacing=10, wrap=True)
-        for chiave, icona, colore, iniziale, spiegazione in definizioni:
+        for chiave, colore, iniziale, spiegazione in definizioni:
             valore = ft.Text("—", size=20, weight=ft.FontWeight.BOLD, color=colore)
             etichetta = ft.Text(iniziale, size=10, color=testo_tenue)
             deposito[chiave] = (valore, etichetta, iniziale)
             riga.controls.append(ft.Container(
                 ft.Row([ft.Container(width=5, height=45, bgcolor=colore, border_radius=0),
-                        ft.Icon(icona, color=colore, size=25),
                         ft.Column([valore, etichetta], spacing=0, tight=True)],
                        spacing=10, vertical_alignment=ft.CrossAxisAlignment.CENTER),
                 padding=ft.padding.only(left=10, right=15, top=10, bottom=10), width=215,
