@@ -2,7 +2,7 @@ import time
 
 import flet as ft
 
-colore_evidenziato = ft.colors.with_opacity(0.2, "#F58426")
+colore_evidenziato = ft.colors.with_opacity(0.25, "#2BA8A6")
 
 
 class Controller:
@@ -58,7 +58,7 @@ class Controller:
 
     # Scheda 1: pianificazione
 
-    def handleSlider(self, e):
+    def handleCambioMaxPartite(self, e):
         # ricalcola solo se c'e' gia' un piano per la selezione corrente
         if self._piano is not None:
             self.handleCalcolaPiano(e)
