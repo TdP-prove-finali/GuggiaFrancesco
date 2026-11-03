@@ -367,6 +367,11 @@ class Controller:
             righe.append(riga)
         tabella = self._tabella(intestazioni, righe, numeriche=[0, 2, 3, 4, 5, 6, 7])
 
+        # la squadra selezionata nel menu viene evidenziata colorando la sua riga
+        for i in range(len(risultati)):
+            if risultati[i]["team_id"] == self._view.dd_squadra.value:
+                tabella.rows[i].color = colore_evidenziato
+
         if criterio == "costo_ottimo":
             nota = "Ordinamento per costo ottimizzato (crescente): l'onere sostenuto pianificando al meglio le trasferte."
         elif criterio == "costo_reale":
