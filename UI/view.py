@@ -103,8 +103,8 @@ class View:
 
     def _scheda_pianificazione(self):
         # menu a tendina con il numero massimo di gare per viaggio, da 1 a 7
-        self.txt_max_partite = ft.Dropdown(width=100, dense=True, filled=True, value="5",
-            bgcolor=pannello, border_color=bordo, border_radius=0,
+        self.txt_max_partite = ft.Dropdown(width=100, dense=True, value="5",
+            border_color=bordo, border_radius=0,
             on_change=self._controller.handleCambioMaxPartite)
         for n in range(1, 8):
             self.txt_max_partite.options.append(ft.dropdown.Option(key=str(n), text=str(n)))
@@ -165,8 +165,8 @@ class View:
                 ], spacing=15, expand=True, scroll=ft.ScrollMode.AUTO)
 
     def _scheda_gestionale(self):
-        self.dd_criterio = ft.Dropdown(label="Ordina per", width=230, dense=True, filled=True,
-            bgcolor=pannello, border_color=bordo, border_radius=0,
+        self.dd_criterio = ft.Dropdown(width=200, dense=True,
+            border_color=bordo, border_radius=0,
             value="costo_ottimo", options=[
                 ft.dropdown.Option(key="costo_ottimo", text="Costo ottimizzato"),
                 ft.dropdown.Option(key="costo_reale", text="Costo reale"),
@@ -184,6 +184,7 @@ class View:
             self._titolo_gruppo("Confronto trasversale"),
             ft.Row([
                 self.btn_franchigie,
+                ft.Text("Ordina per", weight=ft.FontWeight.BOLD),
                 self.dd_criterio,
                 self.stato_franchigie,
             ], wrap=True, spacing=10, run_spacing=10,
