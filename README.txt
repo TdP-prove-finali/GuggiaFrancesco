@@ -4,7 +4,7 @@ Istruzioni per l'utilizzo del software:
 
 2. Importare il progetto nel proprio ambiente di sviluppo.
 
-3. Installare le librerie riportate nel file "requirments.txt".
+3. Installare le librerie riportate nel file "requirements.txt".
 
 4. Importare il data-set "nba_travel.sql" dalla cartella database.
 
