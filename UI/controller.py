@@ -152,12 +152,21 @@ class Controller:
         self._view.update_page()
 
     def handleSalvaParametri(self, e):
+        valori = {}
         try:
             for nome, campo in self._view.txt_parametri.items():
-                self._model.updateParametro(nome, float(campo.value.replace(",", ".")))
+                valori[nome] = float(campo.value.replace(",", "."))
         except ValueError:
             self._view.create_alert("I parametri devono essere numerici")
             return
+
+        for nome in valori:
+            if not 0 <= valori[nome] < 10 ** 12:
+                self._view.create_alert("I parametri devono essere numeri non negativi")
+                return
+
+        for nome in valori:
+            self._model.updateParametro(nome, valori[nome])
 
         self._baseline = None
         self._piano = None
